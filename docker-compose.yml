@@ -1,0 +1,56 @@
+name: ic-gophish
+
+services:
+  # GOPHISH - Plataforma de simulación de phishing
+  gophish:
+    build: ./gophish
+    restart: unless-stopped
+    environment:
+      # Panel de administración (HTTP Interno)
+      ADMIN_LISTEN_URL: "0.0.0.0:3333"
+      ADMIN_USE_TLS: "false"
+      ADMIN_TRUSTED_ORIGINS: "admin.gophish.local:8443"
+      
+      # Servidor de campañas (HTTP Interno)
+      PHISH_LISTEN_URL: "0.0.0.0:8080"
+      PHISH_USE_TLS: "false"
+      
+      # Base de datos SQLite
+      DB_NAME: "sqlite3"
+      DB_FILE_PATH: "/opt/gophish/data/gophish.db"
+    expose:
+      - "3333"
+      - "8080"
+    volumes:
+      - gophish_data:/opt/gophish/data
+    networks:
+      - ic_gophish_internal
+
+  # CADDY - Proxy Inverso y certificados HTTPS
+  caddy:
+    image: caddy:2.11.2-alpine
+    restart: unless-stopped
+    environment:
+      LAB_IP: "${LAB_IP}"
+    ports:
+      - "${LAB_IP}:443:443"
+      - "127.0.0.1:8443:8443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - gophish
+    networks:
+      - ic_gophish_internal
+
+# REDES
+networks:
+  ic_gophish_internal:
+    driver: bridge
+
+# VOLÚMENES PERSISTENTES
+volumes:
+  gophish_data:
+  caddy_data:
+  caddy_config:

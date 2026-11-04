@@ -1,0 +1,15 @@
+# CONFIGURACIÓN GLOBAL
+{
+    default_sni {$LAB_IP}
+}
+# Panel administrativo.
+https://admin.gophish.local:8443 {
+    tls internal
+    reverse_proxy gophish:3333
+}
+
+# Página de simulación.
+https://gophish.local, https://{$LAB_IP} {
+    tls internal
+    reverse_proxy gophish:8080
+}
